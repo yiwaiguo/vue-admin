@@ -2,13 +2,16 @@ import Vue from 'vue'
 import VueI18n from 'vue-i18n'
 import Cookies from 'js-cookie'
 import elementEnLocale from 'element-ui/lib/locale/lang/en' // element-ui lang
-import elementZhLocale from 'element-ui/lib/locale/lang/zh-CN'// element-ui lang
-import elementEsLocale from 'element-ui/lib/locale/lang/es'// element-ui lang
+import elementZhLocale from 'element-ui/lib/locale/lang/zh-CN' // element-ui lang
+import elementEsLocale from 'element-ui/lib/locale/lang/es' // element-ui lang
 import enLocale from './en'
-import zhLocale from './zh'
+import zhkkg from './zhkkg'
+import zhss from './zhss'
 import esLocale from './es'
 
 Vue.use(VueI18n)
+
+let keywords = window.localStorage.getItem("keyword");
 
 const messages = {
   en: {
@@ -16,7 +19,7 @@ const messages = {
     ...elementEnLocale
   },
   zh: {
-    ...zhLocale,
+    ...zhkkg,
     ...elementZhLocale
   },
   es: {
@@ -24,7 +27,12 @@ const messages = {
     ...elementEsLocale
   }
 }
-
+if(keywords == 'ssmall'){
+  messages.zh = {
+    ...zhss,
+      ...elementZhLocale
+  }
+}
 const i18n = new VueI18n({
   // set locale
   // options: en | zh | es

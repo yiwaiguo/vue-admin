@@ -11,6 +11,7 @@ const ScriptExtHtmlWebpackPlugin = require('script-ext-html-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin')
 const OptimizeCSSAssetsPlugin = require('optimize-css-assets-webpack-plugin')
 const UglifyJsPlugin = require('uglifyjs-webpack-plugin')
+const  Version = new Date().getTime();
 
 function resolve(dir) {
   return path.join(__dirname, '..', dir)
@@ -21,6 +22,12 @@ const env = require('../config/' + process.env.env_config + '.env')
 // For NamedChunksPlugin
 const seen = new Set()
 const nameLength = 4
+
+var GenerateAssetPlugin = require('generate-asset-webpack-plugin'); 
+var createServerConfig = function(compilation){
+  let cfgJson={ApiUrl:"http://47.96.22.102:9990/s-api"};
+  return JSON.stringify(cfgJson);
+}
 
 const webpackConfig = merge(baseWebpackConfig, {
   mode: 'production',
@@ -34,8 +41,8 @@ const webpackConfig = merge(baseWebpackConfig, {
   devtool: config.build.productionSourceMap ? config.build.devtool : false,
   output: {
     path: config.build.assetsRoot,
-    filename: utils.assetsPath('js/[name].[chunkhash:8].js'),
-    chunkFilename: utils.assetsPath('js/[name].[chunkhash:8].js')
+    filename: utils.assetsPath('js/[name].[chunkhash:8].'+ Version +'.js'),
+    chunkFilename: utils.assetsPath('js/[name].[chunkhash:8].'+ Version +'.js')
   },
   plugins: [
     // http://vuejs.github.io/vue-loader/en/workflow/production.html
@@ -54,7 +61,7 @@ const webpackConfig = merge(baseWebpackConfig, {
       filename: config.build.index,
       template: 'index.html',
       inject: true,
-      favicon: resolve('favicon.ico'),
+      favicon: resolve('favicon.png'),
       title: 'vue-element-admin',
       templateParameters: {
         BASE_URL: config.build.assetsPublicPath + config.build.assetsSubDirectory,
@@ -100,7 +107,14 @@ const webpackConfig = merge(baseWebpackConfig, {
         to: config.build.assetsSubDirectory,
         ignore: ['.*']
       }
-    ])
+    ]),
+    new GenerateAssetPlugin({//生成配置文件
+      filename: 'serverconfig.json',
+      fn: (compilation, cb) => {
+          cb(null, createServerConfig(compilation));
+      },
+      extraFiles: []
+  })
   ],
   optimization: {
     splitChunks: {

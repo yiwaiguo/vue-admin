@@ -1,0 +1,32 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" >
+<!--
+2013-9-30: Created.
+-->
+<svg>
+<metadata>
+Created by iconfont
+</metadata>
+<defs>
+
+<font id="iconfont" horiz-adv-x="1024" >
+  <font-face
+    font-family="iconfont"
+    font-weight="500"
+    font-stretch="normal"
+    units-per-em="1024"
+    ascent="896"
+    descent="-128"
+  />
+    <missing-glyph />
+    
+    <glyph glyph-name="liebiaoshouqi_" unicode="&#58920;" d="M927.5-31.4h-830v830h830v-830z m-103.7 415c0 24.6-19.9 44.5-44.5 44.5H245.7c-24.6 0-44.5-19.9-44.5-44.5s19.9-44.5 44.5-44.5h533.6c24.6 0 44.5 19.9 44.5 44.5z"  horiz-adv-x="1024" />
+
+    
+    <glyph glyph-name="liebiaozhankaitianjia_" unicode="&#58922;" d="M928.1-32.2H98v830h830.1v-830z m-104.8 415c0 24.6-19.9 44.5-44.5 44.5H556.5V649.6c0 24.6-19.9 44.5-44.5 44.5s-44.5-19.9-44.5-44.5v-222.3H245.2c-24.6 0-44.5-19.9-44.5-44.5s19.9-44.5 44.5-44.5h222.3V116c0-24.6 19.9-44.5 44.5-44.5s44.5 19.9 44.5 44.5V338.3h222.3c24.6 0 44.5 20 44.5 44.5z"  horiz-adv-x="1024" />
+
+    
+
+
+  </font>
+</defs></svg>

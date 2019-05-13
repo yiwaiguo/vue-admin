@@ -1,4 +1,12 @@
 import { asyncRouterMap, constantRouterMap } from '@/router'
+import {
+  Layout,admin,role,menu,config,log,
+  order,orderinfo,fullbill,refund,refundapply,refundRecheck,refundThirdCheck,auditOrder,user,userinfo,modifyphone,
+  riskparams,advancecoupon,coupondetail,couponcheck,transfer,shiftorgrecord,shiftorgverify,towardpublic,corporatebankcard,
+  withdrawalandapproval,grade,paramsetting,gradeapplication,
+  advance,couponamountlog,couponcompareaccount,couponorder,amount,dealercount,orgcount,singlecount,
+  org,orglist,bmdealer,facilitator,orderdealer,orginfoinquire
+} from './import.js'
 
 /**
  * 通过meta.role判断是否与当前用户权限匹配
@@ -34,6 +42,22 @@ function filterAsyncRouter(routes, roles) {
   return res
 }
 
+// function formatRouter(asyncRouterMap) {
+//   const accessedRouters = asyncRouterMap.filter(route => {
+//     if (route.component) {
+//       if (route.component === 'Layout') {
+//         route.component = Layout
+//       } else {
+//         route.component = window[route.component]
+//       }
+//     }
+//     if (route.children && route.children.length) {
+//       route.children = formatRouter(route.children)
+//     }
+//     return true
+//   })
+//   return accessedRouters
+// }
 const permission = {
   state: {
     routers: constantRouterMap,

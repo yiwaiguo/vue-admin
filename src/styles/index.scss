@@ -294,10 +294,86 @@ code {
 
 .block {
   position: absolute;
-  right: 0;
   margin: 15px;
 }
 
 .el-table th>.cell {
   font-weight: bold;
+}
+
+.query-item {
+  width: 16.667%;
+}
+
+.el-collapse-item__content {
+  padding-bottom: 0;
+  display: flex;
+  padding-top: 20px;
+  border-top: 1px solid #ddd;
+}
+
+.el-collapse {
+  border-top: 1px solid #ddd;
+  border-bottom: 1px solid #ddd;
+}
+
+.el-collapse-item__header,
+.el-collapse-item__wrap {
+  border-bottom: 1px solid #ddd;
+}
+
+.el-collapse-item__header {
+  font-size: 15px;
+  font-weight: bold;
+}
+
+.query-item {
+  margin: 0 10px;
+  height: 116px;
+
+  .btn-item {
+    margin-bottom: 5px;
+
+    .el-button {
+      line-height: 0.6;
+    }
+  }
+}
+
+.el-form-item {
+  margin-bottom: 15px;
+}
+
+#app .sidebar-container {
+  width: 216px !important;
+}
+
+#app .main-container {
+  margin-left: 216px;
+}
+
+.el-dialog--center .el-dialog__body {
+  padding: 10px 25px 0;
+
+  .alertbox {
+    padding-bottom: 0;
+    border-bottom: none;
+  }
+}
+
+.el-dialog__footer {
+  padding: 0 20px 20px;
+}
+
+.el-dialog {
+  // background-color: #c2cdd2;
+  border-radius: 6px;
+}
+
+.el-date-editor .el-range-separator {
+  width: 8%;
+}
+
+.el-input.is-disabled .el-input__inner {
+  color:#a9a4a4;
 }

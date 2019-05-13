@@ -1,69 +1,103 @@
 <template>
   <div class="page-container">
-    <div class="show-box" v-show="!switchForm">
-      <div class="query-box">
-        <el-form :inline="true" :model="formInline" class="demo-form-inline">
-          <el-form-item label="角色名">
-            <el-input v-model="formInline.user" placeholder="请输入角色名称"></el-input>
-          </el-form-item>
-          <el-form-item>
-            <el-button type="info" @click="query">查询</el-button>
-            <el-button type="info" @click="clearHandle">清空</el-button>
-          </el-form-item>
-        </el-form>
-      </div>
+    <div v-show="!switchForm" class="show-box">
       <div class="btn-box">
-        <el-button type="primary" icon="el-icon-plus" @click="add">新增</el-button>
-        <el-button type="primary" icon="el-icon-edit-outline" @click="update">修改</el-button>
-        <el-button type="danger" icon="el-icon-delete" @click="del">删除</el-button>
+        <el-button v-if="hasPermission('sys:menu:save')" type="primary" icon="el-icon-plus" @click="add">新增</el-button>
+        <el-button v-if="hasPermission('sys:menu:update')" type="primary" icon="el-icon-edit-outline" @click="update">修改</el-button>
+        <el-button v-if="hasPermission('sys:menu:delete')" type="danger" icon="el-icon-delete" @click="del">删除</el-button>
       </div>
       <div class="tb-box">
         <el-table
-          :data="tableData"
-          style="width: 100%"
+          ref="dataTable"
+          :data="tableListData"
+          :row-style="toggleDisplayTr"
           border
-          :current-row-key="CurrentRowKey"
-          max-height="500"
+          stripe
+          class="init_table"
+          max-height="700"
+          :header-cell-style="rowClass"
         >
-          <el-table-column type="index" width="35" align="center"></el-table-column>
-          <el-table-column type="selection" width="45" align="center"></el-table-column>
-          <el-table-column prop="roleId" label="角色ID" align="center"></el-table-column>
-          <el-table-column prop="roleName" label="角色名称" align="center"></el-table-column>
-          <el-table-column prop="remark" label="备注" align="center"></el-table-column>
-          <el-table-column prop="createTime" label="创建时间" align="center"></el-table-column>
+          <!-- <el-table-column type="selection" width="45" align="center"/> -->
+          <el-table-column width="50" center>
+            <template slot-scope="scope">
+              <el-radio
+                class="radio"
+                v-model="radio"
+                :label="scope.$index"
+                @change.native="getCurrentRow(scope.row)"
+              >&nbsp;</el-radio>
+            </template>
+          </el-table-column>
+          <el-table-column align="center" width="90" prop="menuId" label="菜单ID"/>
+          <el-table-column label="权限名称" min-width="150" show-overflow-tooltip align="left">
+            <template slot-scope="scope">
+              <p :style="`margin-left: ${scope.row.__level * 20}px;margin-top:0;margin-bottom:0`">
+                <i
+                  :class="toggleFoldingClass(scope.row)"
+                  class="permission_toggleFold"
+                  @click="toggleFoldingStatus(scope.row)"
+                />
+                {{ scope.row.name }}
+              </p>
+            </template>
+          </el-table-column>
+          <el-table-column align="center" width="150" prop="parentName" label="上级菜单"/>
+          <el-table-column align="center" width="80" label="图标">
+            <!-- <template slot-scope="scope">
+              <svg-icon :iconClass="scope.row.icon"></svg-icon>
+            </template>-->
+          </el-table-column>
+          <el-table-column align="center" width="90" prop="type" label="类型"></el-table-column>
+          <el-table-column align="center" width="90" prop="orderNum" label="排序号"/>
+          <el-table-column
+            align="left"
+            width="200"
+            prop="url"
+            label="菜单URL"
+            :show-overflow-tooltip="true"
+          />
+          <!-- <el-table-column align="center" width="90" prop="__level" label="层级"/> -->
+          <!-- <el-table-column align="left" prop="__identity" label="节点标识"/> -->
+          <el-table-column align="center" width="150" label="授权标识"/>
         </el-table>
       </div>
-      <div class="block">
-        <el-pagination
-          @size-change="handleSizeChange"
-          @current-change="handleCurrentChange"
-          :current-page="currentPage"
-          :page-sizes="[10, 30, 50]"
-          :page-size="50"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="400"
-          background
-        ></el-pagination>
-      </div>
+      <el-dialog title="提示" :visible.sync="delTip" width="20%" top="30vh">
+        <span>确定要删除选中的记录？</span>
+        <span slot="footer" class="dialog-footer">
+          <el-button @click="delTip = false">取 消</el-button>
+          <el-button type="primary" @click="delConfirm">确 定</el-button>
+        </span>
+      </el-dialog>
     </div>
 
-    <div class="form-section" v-show="switchForm">
-      <div class="panel" v-html="panelTitle"></div>
+    <div v-show="switchForm" class="form-section">
+      <div class="panel" v-html="panelTitle"/>
       <div class="form-container">
-        <el-form ref="role" :model="role" label-width="100px">
-          <el-form-item label="角色名称">
-            <el-input v-model="role.roleName" placeholder="角色名称"></el-input>
+        <el-form ref="menu" :model="menu" label-width="100px">
+          <el-form-item label="类型">
+            <el-radio-group v-model="menu.type">
+              <el-radio label="0">目录</el-radio>
+              <el-radio label="1">菜单</el-radio>
+              <el-radio label="2">按钮</el-radio>
+            </el-radio-group>
           </el-form-item>
-          <el-form-item label="超管子账号">
-            <el-checkbox-group v-model="role.roleType">
-              <el-checkbox label name="type"></el-checkbox>
-            </el-checkbox-group>
+          <el-form-item label="菜单名称">
+            <el-input v-model="menu.name" placeholder="菜单名称或按钮名称"/>
           </el-form-item>
-          <el-form-item label="备注">
-            <el-input v-model="role.remark" placeholder="备注"></el-input>
+          <el-form-item label="上级菜单">
+            <el-input v-model="menu.parentName" readonly placeholder="一级菜单" @focus="showMenuTree"/>
           </el-form-item>
-          <el-form-item label="授权">
-            <ul id="menuTree" class="ztree"></ul>
+          <el-form-item label="菜单URL" v-if="menu.type != 2">
+            <el-input v-model="menu.url" placeholder="菜单URL"/>
+          </el-form-item>
+          <el-form-item label="授权标识" v-if="menu.type == 1 || menu.type == 2">
+            <el-input v-model="menu.perms" placeholder="多个用逗号分隔，如：user:list,user:create"/>
+          </el-form-item>
+          <el-form-item label="排序号" v-if="menu.type != 2">
+            <el-input v-model="menu.orderNum"/>
+          </el-form-item>
+          <el-form-item label="图标" v-if="menu.type != 2">
+            <el-input v-model="menu.icon"/>
           </el-form-item>
           <el-form-item>
             <el-button type="primary" @click="onSubmit">确定</el-button>
@@ -72,640 +106,346 @@
         </el-form>
       </div>
     </div>
+
+    <el-dialog title="选择菜单" :visible.sync="dialogTableVisible" width="300px" height="250px">
+      <el-tree :data="treeData" :props="defaultProps" @node-click="handleNodeClick">
+        <span class="custom-tree-node" slot-scope="{ node, data }">
+          <span>
+            <svg-icon :iconClass="node.icon"></svg-icon>
+            {{ node.label }}
+          </span>
+        </span>
+      </el-tree>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogTableVisible = false">取 消</el-button>
+        <el-button type="primary" @click="dialogTableVisible = false">确 定</el-button>
+      </span>
+    </el-dialog>
   </div>
 </template>
 <script>
+import data2 from "./data2";
+import Vue from "vue";
+import { formatMenuData,isBlank,hasPermission } from "@/utils";
 export default {
   data() {
     return {
-      formInline: {
-        user: "",
-        region: ""
-      },
-      tableData: [],
-      CurrentRowKey: "",
-      currentPage: 1,
+      radio: false,
+      menuData: [],
+      dealedData: [],
+      tableListData: [],
+      foldList: [],
+      multipleSelection: [], // 该数组中的值 都会在列表中进行隐藏  死亡名单
+      loading: true,
       switchForm: false,
-      role: {},
-      panelTitle: "新增用户",
-      dealers: [
-        { dealerCode: "D00", dealerId: "D00" },
-        { dealerCode: "DE1", dealerId: "DE1" }
-      ],
-      checkAbleRoleList: [
-        { roleId: 1, roleName: "aa" },
-        { roleId: 2, roleName: "bb" }
-      ],
-      setting: {
-        data: {
-          simpleData: {
-            enable: true,
-            idKey: "orgId",
-            pIdKey: "parentId"
-            // rootPId: -1
-          },
-          key: {
-            url: "nourl",
-            name: "orgName"
-          }
-        },
-        callback: {
-          onClick: this.setOrg
-        }
+      dialogTableVisible: false,
+      menu: {
+        type: "1"
       },
-      orgTree: [
-        {
-          id: 1000044,
-          orgId: "-2",
-          orgCode: "营运中心机构",
-          orgName: "营运中心机构",
-          orgSequence: "@4",
-          dealerId: "-1",
-          brokerDealerId: "-1",
-          baseInfoIDCard: "",
-          baseInfoIDType: "",
-          baseInfoTelephone: "",
-          parentId: "-2",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000045,
-          orgId: "-1",
-          orgCode: "unknow",
-          orgName: "未知机构",
-          orgSequence: "@1",
-          dealerId: "-1",
-          brokerDealerId: "-1",
-          baseInfoIDCard: "",
-          baseInfoIDType: "",
-          baseInfoTelephone: "",
-          parentId: "-1",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000046,
-          orgId: "2",
-          orgCode: "exchange",
-          orgName: "默认交易商",
-          orgSequence: "@3",
-          dealerId: "-1",
-          brokerDealerId: "-1",
-          baseInfoIDCard: "",
-          baseInfoIDType: "",
-          baseInfoTelephone: "",
-          parentId: "1",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000047,
-          orgId: "4",
-          orgCode: "D00",
-          orgName: "D00",
-          orgSequence: "348721",
-          dealerId: "2",
-          brokerDealerId: "3",
-          baseInfoIDCard: "D00",
-          baseInfoIDType: "6",
-          baseInfoTelephone: "",
-          parentId: "3",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000048,
-          orgId: "1",
-          orgCode: "root",
-          orgName: "默认机构",
-          orgSequence: "@2",
-          dealerId: "-1",
-          brokerDealerId: "-1",
-          baseInfoIDCard: "",
-          baseInfoIDType: "",
-          baseInfoTelephone: "",
-          parentId: "-1",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000049,
-          orgId: "3",
-          orgCode: "T00",
-          orgName: "T00",
-          orgSequence: "760677",
-          dealerId: "2",
-          brokerDealerId: "0",
-          baseInfoIDCard: "T00",
-          baseInfoIDType: "6",
-          baseInfoTelephone: "",
-          parentId: "2",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000050,
-          orgId: "5",
-          orgCode: "D00001",
-          orgName: "D00001",
-          orgSequence: "186160",
-          dealerId: "2",
-          brokerDealerId: "3",
-          baseInfoIDCard: "D00001",
-          baseInfoIDType: "6",
-          baseInfoTelephone: "",
-          parentId: "4",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: "2018-11-18 00:06:53",
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000051,
-          orgId: "6",
-          orgCode: "DEF",
-          orgName: "DEF",
-          orgSequence: "238412",
-          dealerId: "12",
-          brokerDealerId: "0",
-          baseInfoIDCard: "DEF",
-          baseInfoIDType: "6",
-          baseInfoTelephone: "",
-          parentId: "2",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000052,
-          orgId: "7",
-          orgCode: "DE1",
-          orgName: "DE1",
-          orgSequence: "560553",
-          dealerId: "12",
-          brokerDealerId: "13",
-          baseInfoIDCard: "DE1",
-          baseInfoIDType: "6",
-          baseInfoTelephone: "",
-          parentId: "6",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000053,
-          orgId: "8",
-          orgCode: "TES",
-          orgName: "TES",
-          orgSequence: "665812",
-          dealerId: "14",
-          brokerDealerId: "0",
-          baseInfoIDCard: "TES",
-          baseInfoIDType: "6",
-          baseInfoTelephone: "",
-          parentId: "2",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000054,
-          orgId: "10",
-          orgCode: "TES1",
-          orgName: "TES1",
-          orgSequence: "669192",
-          dealerId: "14",
-          brokerDealerId: "15",
-          baseInfoIDCard: "TES1",
-          baseInfoIDType: "6",
-          baseInfoTelephone: "",
-          parentId: "8",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000055,
-          orgId: "11",
-          orgCode: "BUI1",
-          orgName: "BUI1",
-          orgSequence: "620387",
-          dealerId: "16",
-          brokerDealerId: "17",
-          baseInfoIDCard: "BUI1",
-          baseInfoIDType: "6",
-          baseInfoTelephone: "",
-          parentId: "9",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000056,
-          orgId: "12",
-          orgCode: "BUI1000123456",
-          orgName: "BUI1000123456",
-          orgSequence: "280308",
-          dealerId: "16",
-          brokerDealerId: "17",
-          baseInfoIDCard: "BUI1000123456",
-          baseInfoIDType: "6",
-          baseInfoTelephone: "",
-          parentId: "11",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000057,
-          orgId: "15",
-          orgCode: "TES3",
-          orgName: "TES3-测试订货分部",
-          orgSequence: "994221",
-          dealerId: "24",
-          brokerDealerId: "0",
-          baseInfoIDCard: "TES3",
-          baseInfoIDType: "6",
-          baseInfoTelephone: "",
-          parentId: "2",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000058,
-          orgId: "14",
-          orgCode: "TES2",
-          orgName: "TES2-测试订货分部",
-          orgSequence: "170727",
-          dealerId: "23",
-          brokerDealerId: "0",
-          baseInfoIDCard: "TES2",
-          baseInfoIDType: "6",
-          baseInfoTelephone: "",
-          parentId: "2",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000059,
-          orgId: "13",
-          orgCode: "BU1",
-          orgName: "BU1",
-          orgSequence: "323417",
-          dealerId: "16",
-          brokerDealerId: "18",
-          baseInfoIDCard: "BU1",
-          baseInfoIDType: "6",
-          baseInfoTelephone: "",
-          parentId: "9",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000060,
-          orgId: "9",
-          orgCode: "BUI",
-          orgName: "BUI",
-          orgSequence: "9070",
-          dealerId: "16",
-          brokerDealerId: "0",
-          baseInfoIDCard: "BUI",
-          baseInfoIDType: "6",
-          baseInfoTelephone: "",
-          parentId: "2",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000061,
-          orgId: "16",
-          orgCode: "TE2",
-          orgName: "测试区域服务商TE2",
-          orgSequence: "219701",
-          dealerId: "23",
-          brokerDealerId: "25",
-          baseInfoIDCard: "TE2",
-          baseInfoIDType: "6",
-          baseInfoTelephone: "",
-          parentId: "14",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000062,
-          orgId: "17",
-          orgCode: "TE3",
-          orgName: "测试区域服务商TE3",
-          orgSequence: "735330",
-          dealerId: "24",
-          brokerDealerId: "26",
-          baseInfoIDCard: "TE3",
-          baseInfoIDType: "6",
-          baseInfoTelephone: "",
-          parentId: "15",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: "2018-07-30 11:44:44",
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000063,
-          orgId: "18",
-          orgCode: "TES1999999999",
-          orgName: "测试",
-          orgSequence: "902242",
-          dealerId: "14",
-          brokerDealerId: "15",
-          baseInfoIDCard: "999999999",
-          baseInfoIDType: "4",
-          baseInfoTelephone: "",
-          parentId: "10",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000064,
-          orgId: "21",
-          orgCode: "TE3000000001",
-          orgName: "测试",
-          orgSequence: "223994",
-          dealerId: "24",
-          brokerDealerId: "26",
-          baseInfoIDCard: "00000",
-          baseInfoIDType: "4",
-          baseInfoTelephone: "",
-          parentId: "17",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000065,
-          orgId: "19",
-          orgCode: "TE2000000000",
-          orgName: "测试",
-          orgSequence: "354310",
-          dealerId: "23",
-          brokerDealerId: "25",
-          baseInfoIDCard: "000000000",
-          baseInfoIDType: "4",
-          baseInfoTelephone: "",
-          parentId: "16",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000066,
-          orgId: "20",
-          orgCode: "TE2000000001",
-          orgName: "测试2",
-          orgSequence: "350944",
-          dealerId: "23",
-          brokerDealerId: "25",
-          baseInfoIDCard: "000000001",
-          baseInfoIDType: "4",
-          baseInfoTelephone: "",
-          parentId: "16",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-07-11 06:01:36",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        },
-        {
-          id: 1000067,
-          orgId: "22",
-          orgCode: "D00111111111",
-          orgName: "123",
-          orgSequence: "864991",
-          dealerId: "2",
-          brokerDealerId: "3",
-          baseInfoIDCard: "kl;",
-          baseInfoIDType: "6",
-          baseInfoTelephone: "",
-          parentId: "4",
-          primaryKeyName: "orgId",
-          intoUser: "ADMIN",
-          intoTime: "2018-11-18 00:06:56",
-          updUser: "ADMIN",
-          updTime: null,
-          remarks: null,
-          subOrgCount: null,
-          userCount: null,
-          levelInfo: null
-        }
-      ]
+      panelTitle: "",
+      defaultProps: {
+        children: "children",
+        label: "name"
+      },
+      treeData: [],
+      data: {},
+      delTip: false
     };
   },
+  computed: {
+    /** *******************************
+     ** Fn: foldAllList
+     ** Intro: 记录属性结构的首层节点
+     ** Author: zyx
+     *********************************/
+    foldAllList() {
+      return this.tableListData.map(x => x.__identity);
+    }
+  },
+  created() {
+    // this.dealedData = []
+    this.getMenuList();
+    this.getMenuTree();
+  },
   methods: {
-    query() {
-      let queryData = { user: this.formInline.user };
-      this._fetch("/query", {
-        method: "POST",
-        body: queryData
-      });
+    hasPermission(val){
+      return hasPermission(val)
     },
-    clearHandle() {
-      this.formInline.user = "";
+    initData() {
+      this.dealedData = formatMenuData(this.menuData);
+      console.log(this.dealedData)
+      this.tableListData = this.formatConversion([], this.dealedData);
+      // this.tableListData = this.formatConversion([], data)
+      this.foldList = this.foldAllList;
     },
     add() {
+      this.panelTitle = "新增菜单";
       this.switchForm = true;
+      this.menu = { parentName: null, parentId: 0, type: "1", orderNum: 0 };
     },
     update() {
-      if (!this.CurrentRowKey) {
+      if (!this.multipleSelection.menuId) {
         this.$message("请选择一条记录");
+        return;
       }
+      this.panelTitle = "菜单信息更改";
+      this.switchForm = true;
+      this.getMenuInfo();
     },
     del() {
-      if (!this.CurrentRowKey) {
+      if (!this.multipleSelection.menuId) {
         this.$message("请选择一条记录");
+        return;
+      }
+      this.delTip = true;
+    },
+    async delConfirm() {     
+      let r = await this._fetch("/sys/menu/delete", {
+        method: "POST",
+        body: this.menu.menuId
+      });
+      if (r.code === 0) {
+        this.$message("操作成功");
+        this.getMenuList();
+        this.delTip = false;
+      } else {
+        this.$message(r.msg);
+        this.delTip = false;
       }
     },
-    uptDraPwd() {
-      if (!this.CurrentRowKey) {
-        this.$message("请选择一条记录");
+    /** *******************************
+     ** Fn: toggleFoldingStatus
+     ** Intro: 切换展开 还是折叠
+     ** @params: params 当前点击行的数据
+     ** Author: zyx
+     *********************************/
+    toggleFoldingStatus(params) {
+      this.foldList.includes(params.__identity)
+        ? this.foldList.splice(this.foldList.indexOf(params.__identity), 1)
+        : this.foldList.push(params.__identity);
+    },
+    /** *******************************
+     ** Fn: toggleDisplayTr
+     ** Intro: 该方法会对每一行数据都做判断 如果foldList 列表中的元素 也存在与当前行的 __family列表中  则该行不展示
+     ** @params:
+     ** Author: zyx
+     *********************************/
+    toggleDisplayTr({ row, index }) {
+      for (let i = 0; i < this.foldList.length; i++) {
+        const item = this.foldList[i];
+        // 如果foldList中元素存在于 row.__family中，则该行隐藏。  如果该行的自身标识等于隐藏元素，则代表该元素就是折叠点
+        if (row.__family.includes(item) && row.__identity !== item)
+          return "display:none;";
+      }
+      return "";
+    },
+    /** *******************************
+     ** Fn: toggleFoldingClass
+     ** Intro: 如果子集长度为0，则不返回字体图标。
+     ** Intro: 如果子集长度为不为0，根据foldList是否存在当前节点的标识返回相应的折叠或展开图标
+     ** Intro: 关于class说明：permission_placeholder返回一个占位符，具体查看class
+     ** @params: params 当前行的数据对象
+     ** Author: zyx
+     *********************************/
+    toggleFoldingClass(params) {
+      return params.Children == null
+        ? "permission_placeholder"
+        : this.foldList.indexOf(params.__identity) === -1
+        ? "iconfont icon-liebiaoshouqi_"
+        : "iconfont icon-liebiaozhankaitianjia_";
+    },
+    /** *******************************
+     ** Fn: formatConversion
+     ** Intro: 将树形接口数据扁平化
+     ** @params: parent 为当前累计的数组  也是最后返回的数组
+     ** @params: children 为当前节点仍需继续扁平子节点的数据
+     ** @params: index 默认等于0， 用于在递归中进行累计叠加 用于层级标识
+     ** @params: family 装有当前包含元素自身的所有父级 身份标识
+     ** @params: elderIdentity 父级的  唯一身份标识
+     ** Author: zyx
+     *********************************/
+    formatConversion(
+      parent,
+      children,
+      index = 0,
+      family = [],
+      elderIdentity = "x"
+    ) {
+      // children如果长度等于0，则代表已经到了最低层
+      // let page = (this.startPage - 1) * 10
+      if (children.length > 0) {
+        children.map((x, i) => {
+          // 设置 __level 标志位 用于展示区分层级
+          Vue.set(x, "__level", index);
+          // 设置 __family 为家族关系 为所有父级，包含本身在内
+          Vue.set(x, "__family", [...family, elderIdentity + "_" + i]);
+          // 本身的唯一标识  可以理解为个人的身份证咯 一定唯一。
+          Vue.set(x, "__identity", elderIdentity + "_" + i);
+          parent.push(x);
+          // 如果仍有子集，则进行递归
+          if (x.Children && x.Children.length > 0)
+            this.formatConversion(
+              parent,
+              x.Children,
+              index + 1,
+              [...family, elderIdentity + "_" + i],
+              elderIdentity + "_" + i
+            );
+        });
+      }
+      return parent;
+    },
+    onSubmit() {
+      if (this.validator()) {
+        return;
+      }
+      var url = this.menu.menuId == null ? "/sys/menu/save" : "/sys/menu/update";
+      this.addUser(url);
+    },
+    async addUser(url) {
+      let r = await this._fetch(url, {
+        method: "POST",
+        body: this.menu
+      });
+      if (r.code === 0) {
+        this.$message("操作成功");
+        this.getMenuList();
+        this.switchForm = false;
+      } else {
+        this.$message(r.msg);
       }
     },
-    reset() {
-      if (!this.CurrentRowKey) {
-        this.$message("请选择一条记录");
-      }
-    },
-    onSubmit() {},
     reback() {
       this.switchForm = false;
     },
-    initOrgTree() {
-      let ztree = $.fn.zTree.init($("#menuTree"), this.setting, this.orgTree);
-      //展开所有节点
-      ztree.expandAll(false);
+    async getMenuList() {
+      this.menuData = await this._fetch("/sys/menu/list", {
+        method: "GET"
+      });
+      this.initData();
     },
-    setOrg(event, treeId, treeNode, clickFlag) {
-      this.user.orgId = treeNode.orgId;
+    async getMenuTree() {
+      this.data = await this._fetch("/sys/menu/select", {
+        method: "GET"
+      });
     },
-    getAdminList() {
-      //   this._fetch("/admin", { method: "GET" });
+    async getMenuInfo() {
+      let r = await this._fetch(
+        "/sys/menu/info/" + this.menu.menuId,
+        {
+          method: "GET"
+        }
+      );
+      this.menu = r.menu;
+      this.menu.type = r.menu.type.toString();
+      this.data.menuList.forEach(item => {
+        if (this.menu.parentId == item.menuId) {
+          return this.menu.parentName = item.name;
+        }
+      });
+      console.log(this.menu.parentName)
     },
-    handleSizeChange() {},
-    handleCurrentChange() {}
-  },
-  created() {
-    this.getAdminList();
-  },
-  mounted() {
-    this.initOrgTree();
+    showMenuTree() {
+      this.dialogTableVisible = true;
+      this.treeData = this.transform(this.data);
+    },
+    handleNodeClick(data) {
+      console.log(data)
+      this.menu.parentName = data.name;
+      this.menu.parentId = data.menuId;
+    },
+    // handleSelectionChange(val) {
+    //   this.multipleSelection = val;
+    //   this.menu.ids = [];
+    //   this.multipleSelection.forEach(item => {
+    //     this.menu.ids.push(item.id);
+    //   });
+    //   this.rowData = this.multipleSelection[0];
+    //   if (this.rowData) {
+    //     this.menu.id = this.rowData.id;
+    //   }
+    // },
+    // getRowData(row) {
+    //   console.log(row)
+    //   this.$refs.dataTable.toggleRowSelection(row);
+    //   this.menu.menuId = row.menuId;
+    // },
+    getCurrentRow(val) {
+      this.multipleSelection = val;
+      this.menu = val;
+      this.menu.menuId = val.menuId;
+    },
+    // select(selection, row) {
+    //   if (selection.length > 1) {
+    //     selection.shift();
+    //   }
+    //   this.multipleSelection = row;
+    //   this.menu = row;
+    //   this.menu.menuId = row.menuId;
+    // },
+    // //限制全选
+    // handleSelectionChange(val){
+    //   if(val.length > 2){
+    //     this.$message('请选择一条记录');
+    //     this.$refs.dataTable.clearSelection()
+    //   }
+    // },
+    // getRowData(row) {
+    //   this.$refs.dataTable.toggleRowSelection(row);
+    //   this.multipleSelection = row;
+    //   this.menu = row;
+    //   this.menu.menuId = row.menuId;
+    // },
+    transform(data) {
+      var menuData = data.menuList;
+      var newData = [];
+      menuData.forEach(item => {
+        if (item.parentId == 0) {
+          item.icon = "folder";
+          newData.push(item);
+        }
+      });
+      newData.map(item => {
+        item.children = [];
+        menuData.forEach(obj => {
+          if (obj.parentId == item.menuId) {
+            obj.icon = "folder";
+            item.children.push(obj);
+          }
+        });
+      });
+      newData.map(item => {
+        item.children.map(obj => {
+          obj.children = [];
+          menuData.forEach(child => {
+            if(child.parentId == obj.menuId){
+              child.icon = "file";
+              obj.children.push(child)
+            }
+          })
+        })
+      });
+      return newData;
+    },
+    validator: function() {
+      if (isBlank(this.menu.name)) {
+        this.$message("菜单名称不能为空");
+        return true;
+      }
+
+      //菜单
+      if (this.menu.type === 1 && isBlank(this.menu.url)) {
+        this.$message("菜单URL不能为空");
+        return true;
+      }
+    },
+    rowClass() {
+      return "text-align:center";
+    }
   }
 };
 </script>
-<style>
+<style lang="scss" scoped>
 .input {
   display: inline-block;
   width: 200px;

@@ -7,8 +7,12 @@ const app = {
       withoutAnimation: false
     },
     device: 'desktop',
-    language: Cookies.get('language') || 'en',
-    size: Cookies.get('size') || 'medium'
+    language: Cookies.get('language') || 'zh',
+    size: Cookies.get('size') || 'medium',
+    levelCode:'',
+    couponNo:'',
+    couponStatus:'',
+    sendType:''
   },
   mutations: {
     TOGGLE_SIDEBAR: state => {
@@ -35,7 +39,19 @@ const app = {
     SET_SIZE: (state, size) => {
       state.size = size
       Cookies.set('size', size)
-    }
+    },
+    setLevelCode(state,levelCode){
+      state.levelCode = levelCode
+    },
+    setCouponNo(state,couponNo){
+      state.couponNo = couponNo
+    },
+    setCouponNoStatus(state,couponStatus){
+      state.couponStatus = couponStatus
+    },
+    setSendType(state,sendType){
+      state.sendType = sendType
+    },
   },
   actions: {
     toggleSideBar({ commit }) {

@@ -1,5 +1,6 @@
 import { loginByUsername, logout, getUserInfo } from '@/api/login'
 import { getToken, setToken, removeToken } from '@/utils/auth'
+import { storeLocalStore } from '../index'
 
 const user = {
   state: {
@@ -13,7 +14,8 @@ const user = {
     roles: [],
     setting: {
       articlePlatform: []
-    }
+    },
+    admin:''
   },
 
   mutations: {
@@ -40,50 +42,74 @@ const user = {
     },
     SET_ROLES: (state, roles) => {
       state.roles = roles
-    }
+    },
+    SET_ADMIN: (state, admin) => {
+      state.admin = admin
+      storeLocalStore(admin)
+    },
   },
 
   actions: {
     // 用户名登录
-    LoginByUsername({ commit }, userInfo) {
-      const username = userInfo.username.trim()
-      return new Promise((resolve, reject) => {
-        loginByUsername(username, userInfo.password).then(response => {
-          const data = response.data
-          commit('SET_TOKEN', data.token)
-          setToken(response.data.token)
-          resolve()
-        }).catch(error => {
-          reject(error)
-        })
-      })
+    // LoginByUsername({ commit }, userInfo) {
+    //   const username = userInfo.username.trim()
+    //   return new Promise((resolve, reject) => {
+    //     loginByUsername(username, userInfo.password).then(response => {
+    //       const data = response.data
+    //       commit('SET_TOKEN', data.token)
+    //       setToken(response.data.token)
+    //       resolve()
+    //     }).catch(error => {
+    //       reject(error)
+    //     })
+    //   })
+    // },
+    LoginByUsername({commit},data){//data为登录返回的数据
+      commit('SET_TOKEN', data.username),
+      commit('SET_ADMIN', data.username),
+      setToken(data.token)
     },
-
     // 获取用户信息
-    GetUserInfo({ commit, state }) {
+    // GetUserInfo({ commit, state }) {
+    //   return new Promise((resolve, reject) => {
+    //     getUserInfo('admin').then(response => {/**admin 为state.token,暂写死，权限都为admin权限**/
+    //       if (!response.data) { // 由于mockjs 不支持自定义状态码只能这样hack
+    //         reject('error')
+    //       }
+    //       const data = response.data
+
+    //       if (data.roles && data.roles.length > 0) { // 验证返回的roles是否是一个非空数组
+    //         commit('SET_ROLES', [data.roles])
+    //       } else {
+    //         reject('getInfo: roles must be a non-null array !')
+    //       }
+
+    //       commit('SET_NAME', data.name)
+    //       commit('SET_AVATAR', data.avatar)
+    //       commit('SET_INTRODUCTION', data.introduction)
+    //       resolve(response)
+    //     }).catch(error => {
+    //       reject(error)
+    //     })
+    //   })
+    // },
+    GetUserInfo({ commit, state }){
       return new Promise((resolve, reject) => {
-        getUserInfo(state.token).then(response => {
-          if (!response.data) { // 由于mockjs 不支持自定义状态码只能这样hack
-            reject('error')
-          }
-          const data = response.data
-
-          if (data.roles && data.roles.length > 0) { // 验证返回的roles是否是一个非空数组
-            commit('SET_ROLES', data.roles)
-          } else {
-            reject('getInfo: roles must be a non-null array !')
-          }
-
-          commit('SET_NAME', data.name)
-          commit('SET_AVATAR', data.avatar)
-          commit('SET_INTRODUCTION', data.introduction)
-          resolve(response)
-        }).catch(error => {
-          reject(error)
-        })
-      })
+            getUserInfo('admin').then(response => {//用模拟admin的avatar与introduction
+              if (!response.data) { // 由于mockjs 不支持自定义状态码只能这样hack
+                reject('error')
+              }
+              const data = response.data
+              commit('SET_ROLES', [state.token])
+              commit('SET_NAME', state.token)
+              commit('SET_AVATAR', data.avatar)
+              commit('SET_INTRODUCTION', data.introduction)
+              resolve(response)
+            }).catch(error => {
+              reject(error)
+            })
+          })
     },
-
     // 第三方验证登录
     // LoginByThirdparty({ commit, state }, code) {
     //   return new Promise((resolve, reject) => {

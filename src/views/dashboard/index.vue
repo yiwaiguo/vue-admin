@@ -18,9 +18,12 @@ export default {
     }
   },
   computed: {
-    ...mapGetters([
-      'roles'
-    ])
+    // ...mapGetters([
+    //   'roles'
+    // ]),
+    roles(){
+      return localStorage.getItem('userMsg')
+    }
   },
   created() {
     if (!this.roles.includes('admin')) {

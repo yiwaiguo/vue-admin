@@ -1,0 +1,51 @@
+export const Layout = () => import('@/views/layout/Layout');
+export const admin = () => import('@/views/modules/sys/admin');
+export const role = () => import('@/views/modules/sys/role');
+export const menu = () => import('@/views/modules/sys/menu');
+export const config = () => import('@/views/modules/sys/config');
+export const log = () => import('@/views/modules/sys/log');
+export const sysUserAudit = () => import('@/views/modules/sys/sysUserAudit');
+
+export const order = () => import('@/views/modules/mall/order');
+export const orderinfo = () => import('@/views/modules/mall/order/orderinfo');
+export const fullbill = () => import('@/views/modules/mall/order/fullbill');
+export const refund = () => import('@/views/modules/mall/refund');
+export const refundapply = () => import('@/views/modules/mall/refund/refundapply');
+export const refundRecheck = () => import('@/views/modules/mall/refund/refundRecheck');
+export const refundThirdCheck = () => import('@/views/modules/mall/refund/refundThirdCheck');
+// export const buyback = () => import('@/views/modules/mall/buyback');
+export const auditOrder = () => import('@/views/modules/mall/buyback/auditOrder');
+export const user = () => import('@/views/modules/mall/user');
+export const userinfo = () => import('@/views/modules/mall/user/userinfo');
+export const modifyphone = () => import('@/views/modules/mall/user/modifyphone');
+
+export const riskparams = () => import('@/views/modules/reserve/riskparams');
+export const advancecoupon = () => import('@/views/modules/reserve/advancecoupon');
+export const coupondetail = () => import('@/views/modules/reserve/advancecoupon/coupondetail');
+export const couponcheck = () => import('@/views/modules/reserve/advancecoupon/couponcheck');
+export const transfer = () => import('@/views/modules/reserve/transfer');
+export const shiftorgrecord = () => import('@/views/modules/reserve/transfer/shiftorgrecord');
+export const shiftorgverify = () => import('@/views/modules/reserve/transfer/shiftorgverify');
+export const towardpublic = () => import('@/views/modules/reserve/public');
+export const corporatebankcard = () => import('@/views/modules/reserve/public/corporatebankcard');
+export const withdrawalandapproval = () => import('@/views/modules/reserve/public/withdrawalandapproval');
+export const grade = () => import('@/views/modules/reserve/grade');
+export const paramsetting = () => import('@/views/modules/reserve/grade/paramsetting');
+export const gradeapplication = () => import('@/views/modules/reserve/grade/gradeapplication');
+
+export const advance = () => import('@/views/modules/report/advance');
+export const couponamountlog = () => import('@/views/modules/report/advance/couponamountlog');
+export const couponcompareaccount = () => import('@/views/modules/report/advance/couponcompareaccount');
+export const couponorder = () => import('@/views/modules/report/advance/couponorder');
+export const amount = () => import('@/views/modules/report/amount');
+export const dealercount = () => import('@/views/modules/report/amount/dealercount');
+export const orgcount = () => import('@/views/modules/report/amount/orgcount');
+export const singlecount = () => import('@/views/modules/report/amount/singlecount');
+export const nightorder = () => import('@/views/modules/report/nightorder/children');
+
+export const org = () => import('@/views/modules/info/org');
+export const orglist = () => () => import('@/views/modules/info/org/orglist');
+export const bmdealer = () => () => import('@/views/modules/info/org/bmdealer');
+export const facilitator = () => () => import('@/views/modules/info/org/facilitator');
+export const orderdealer = () => () => import('@/views/modules/info/org/orderdealer');
+export const orginfoinquire = () => () => import('@/views/modules/info/org/orginfoinquire');

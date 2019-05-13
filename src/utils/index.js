@@ -26,7 +26,9 @@ export function parseTime(time, cFormat) {
   const time_str = format.replace(/{(y|m|d|h|i|s|a)+}/g, (result, key) => {
     let value = formatObj[key]
     // Note: getDay() returns 0 on Sunday
-    if (key === 'a') { return ['日', '一', '二', '三', '四', '五', '六'][value ] }
+    if (key === 'a') {
+      return ['日', '一', '二', '三', '四', '五', '六'][value]
+    }
     if (result.length > 0 && value < 10) {
       value = '0' + value
     }
@@ -129,11 +131,11 @@ export function param2Obj(url) {
   }
   return JSON.parse(
     '{"' +
-      decodeURIComponent(search)
-        .replace(/"/g, '\\"')
-        .replace(/&/g, '","')
-        .replace(/=/g, '":"') +
-      '"}'
+    decodeURIComponent(search)
+    .replace(/"/g, '\\"')
+    .replace(/&/g, '","')
+    .replace(/=/g, '":"') +
+    '"}'
   )
 }
 
@@ -180,8 +182,7 @@ export function toggleClass(element, className) {
   element.className = classString
 }
 
-export const pickerOptions = [
-  {
+export const pickerOptions = [{
     text: '今天',
     onClick(picker) {
       const end = new Date()
@@ -230,7 +231,7 @@ export function getTime(type) {
 export function debounce(func, wait, immediate) {
   let timeout, args, context, timestamp, result
 
-  const later = function() {
+  const later = function () {
     // 据上一次触发时间间隔
     const last = +new Date() - timestamp
 
@@ -247,7 +248,7 @@ export function debounce(func, wait, immediate) {
     }
   }
 
-  return function(...args) {
+  return function (...args) {
     context = this
     timestamp = +new Date()
     const callNow = immediate && !timeout
@@ -288,4 +289,88 @@ export function uniqueArr(arr) {
 
 export function isExternal(path) {
   return /^(https?:|mailto:|tel:)/.test(path)
+}
+
+export function isBlank(value) {
+  return !value || !/\S/.test(value)
+}
+
+export function resMessage(r) {
+  if (r.code === 0) {
+    this.$message("操作成功");
+  } else {
+    this.$message(r.msg);
+  }
+}
+
+export function formatMenuData(data) {
+  let newData = [];
+  data.map(item => {
+    if (item.parentId == 0) {
+      newData.push(item)
+    }
+    return newData
+  });
+  newData.map(item => {
+    item.Children = [];
+    data.forEach(obj => {
+      if (obj.parentId == item.menuId) {
+        item.Children.push(obj)
+      }
+    })
+  })
+  newData.map(item => {
+    item.Children.map(obj => {
+      obj.Children = [];
+      data.forEach(child => {
+        if (child.parentName == obj.name) {
+          obj.Children.push(child)
+        }
+      })
+    })
+  })
+  newData.map(item => {
+    item.Children.map(obj => {
+      obj.Children.forEach(child => {
+        child.Children = [];
+      data.forEach(each => {
+        if (each.parentName == child.name) {
+          child.Children.push(each)
+        }
+      })
+      })
+    })
+  })
+  return newData
+}
+
+//十三位时间戳转毫秒级时间格式
+export function formatDateTime(inputTime) {
+  var date = new Date(inputTime);
+  var y = date.getFullYear();
+  var m = date.getMonth() + 1;
+  m = m < 10 ? ('0' + m) : m;
+  var d = date.getDate();
+  d = d < 10 ? ('0' + d) : d;
+  var h = date.getHours();
+  h = h < 10 ? ('0' + h) : h;
+  var minute = date.getMinutes();
+  var second = date.getSeconds();
+  minute = minute < 10 ? ('0' + minute) : minute;
+  second = second < 10 ? ('0' + second) : second;
+  return y + '-' + m + '-' + d + ' ' + h + ':' + minute + ':' + second;
+}
+
+export function IsInArray(arr, val) {
+  var testStr = ',' + arr.join(",") + ",";
+  return testStr.indexOf("," + val + ",") != -1;
+}
+
+export function hasPermission(permission) {
+  var permissions = localStorage.getItem("permissions");
+  if (permissions.indexOf(permission) > -1) {
+    return true;
+  } else {
+    return false;
+  }
 }

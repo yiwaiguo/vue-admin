@@ -9,6 +9,10 @@ import getters from './getters'
 
 Vue.use(Vuex)
 
+export function storeLocalStore (state) {
+  window.localStorage.setItem("userMsg",JSON.stringify(state));
+}
+
 const store = new Vuex.Store({
   modules: {
     app,

@@ -9,90 +9,87 @@
       <div class="login-box">
         <div class="form-item">
           <label for class="login-icon">
-            <i class="fa fa-user-circle-o fa-lg"></i>
+            <i class="fa fa-user-circle-o fa-lg"/>
           </label>
-          <input type="text" v-model="formData.user" placeholder="用户名">
+          <input v-model="formData.username" type="text" placeholder="用户名">
         </div>
         <div class="form-item">
           <label for class="login-icon">
-            <i class="fa fa-lock fa-lg"></i>
+            <i class="fa fa-lock fa-lg"/>
           </label>
-          <input type="password" v-model="formData.password" placeholder="密码">
+          <input v-model="formData.password" type="password" placeholder="密码">
         </div>
         <div class="form-item captcha-box">
           <label for class="login-icon">
-            <i class="fa fa-shield fa-lg"></i>
+            <i class="fa fa-shield fa-lg"/>
           </label>
-          <input type="password" v-model="formData.captcha" placeholder="验证码">
-          <img alt="点击刷新" :src="src" @click="refreshCode" class="refresh">
+          <input v-model="formData.captcha" placeholder="验证码" @keyup.enter="handleSubmit">
+          <img :src="src" alt="点击刷新" class="refresh" @click="refreshCode">
         </div>
         <div class="form-item">
           <Button type="primary" @click="handleSubmit">立即登录</Button>
         </div>
       </div>
     </div>
-    <footer>©Copyright Power By SSMALL All Rights Reserved.</footer>
+    <!-- <footer>©Copyright Power By DIMAI All Rights Reserved.</footer> -->
   </div>
 </template>
 
 <script>
+let qs = require("qs"); //解决formData数据格式
+var localIp = ''
 export default {
   data() {
     return {
       formData: {
-        username: "admin",
+        username: "",
         password: "",
         captcha: ""
       },
-      src: ""
+      src: this.baseURL + "/captcha.jpg"
     };
+  },
+  created() {
+    this.getKeywords();
   },
   methods: {
     refreshCode() {
-    //   this.src = "/admin/captcha.jpg?t=" + new Date();
+      this.src = this.baseURL + "/captcha.jpg?t=" + new Date();
     },
     handleSubmit() {
-      this.$store
-        .dispatch("LoginByUsername", this.formData)
-        .then(() => {
-          this.$router.push({ path: this.redirect || "/" });
+      fetch(this.baseURL + "/sys/login", {
+        method: "POST",
+        credentials: "include",
+        headers: new Headers({
+          "Content-Type": "application/x-www-form-urlencoded" // 指定提交方式为表单提交
+        }),
+        body: qs.stringify(this.formData)
+      })
+        .then(res => {
+          return res.text();
         })
-        .catch(() => {
-
+        .then(res => {
+          var r = JSON.parse(res);
+          if (r.code == 0) {
+            localStorage.setItem("token", r.token);
+            localStorage.setItem("adminEd", r.adminEd);
+            localStorage.setItem("role", this.formData.username);
+            this.$store
+              .dispatch("LoginByUsername", this.formData)
+              .then(() => {
+                this.$router.push({ path: this.redirect || "/" });
+              })
+              .catch(() => {});
+          } else {
+            this.$message.error(r.msg);
+            this.refreshCode();
+          }
         });
-    //   fetch(baseURL + "sys/login", {
-    //     method: "POST",
-    //     credentials: "include",
-    //     headers: new Headers({
-    //       "Content-Type": "application/x-www-form-urlencoded" // 指定提交方式为表单提交
-    //     }),
-    //     body: new URLSearchParams([
-    //       ["username", this.formData.user],
-    //       ["password", this.formData.password],
-    //       ["captcha", this.formData.captcha]
-    //     ]).toString()
-    //   })
-    //     .then(res => {
-    //       return res.text();
-    //     })
-    //     .then(res => {
-    //       console.log(res);
-    //       var r = JSON.parse(res);
-    //       if (r.code == 0) {
-    //         localStorage.setItem("token", r.token);
-    //         localStorage.setItem("adminEd", r.adminEd);
-    //         this.$router.push({
-    //           name: "home"
-    //         });
-    //       } else {
-    //         this.$Message.error(r.msg);
-    //         this.refreshCode();
-    //       }
-    //     });
+    },
+    async getKeywords() {
+      let r = await this._fetch("/api/getKeyWords", { method: "GET" });
+      localStorage.setItem("keyword", r.beanName);
     }
-  },
-  created() {
-    // this.getCaptchaCode();
   }
 };
 </script>
@@ -101,7 +98,7 @@ export default {
 .login-wrapper {
   width: 100%;
   height: 100%;
-  background-image: url("../../assets/images/login_bg.jpg");
+  background-image: url("../../assets/images/login-bg.jpg");
   background-size: cover;
   background-position: center;
   position: relative;

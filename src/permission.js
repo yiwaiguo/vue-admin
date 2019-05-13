@@ -7,6 +7,7 @@ import { getToken } from '@/utils/auth' // getToken from cookie
 
 NProgress.configure({ showSpinner: false })// NProgress Configuration
 
+var token = localStorage.getItem('token')
 // permission judge function
 function hasPermission(roles, permissionRoles) {
   if (roles.indexOf('admin') >= 0) return true // admin permission passed directly

@@ -1,6 +1,10 @@
 <template>
   <div class="navbar">
-    <hamburger :toggle-click="toggleSideBar" :is-active="sidebar.opened" class="hamburger-container"/>
+    <hamburger
+      :toggle-click="toggleSideBar"
+      :is-active="sidebar.opened"
+      class="hamburger-container"
+    />
 
     <breadcrumb class="breadcrumb-container"/>
 
@@ -23,22 +27,22 @@
         </el-tooltip>
       </template>
 
-      <el-dropdown class="avatar-container right-menu-item" trigger="click">
+      <el-dropdown class="avatar-container right-menu-item" trigger="click" size="small">
         <div class="avatar-wrapper">
           <img :src="avatar+'?imageView2/1/w/80/h/80'" class="user-avatar">
           <i class="el-icon-caret-bottom"/>
         </div>
         <el-dropdown-menu slot="dropdown">
           <router-link to="/">
-            <el-dropdown-item>
-              {{ $t('navbar.dashboard') }}
-            </el-dropdown-item>
+            <el-dropdown-item>{{ $t('navbar.dashboard') }}</el-dropdown-item>
           </router-link>
-          <a target="_blank" href="https://github.com/PanJiaChen/vue-element-admin/">
-            <el-dropdown-item>
-              {{ $t('navbar.github') }}
-            </el-dropdown-item>
-          </a>
+          <el-dropdown-item>欢迎您，{{ role }}！</el-dropdown-item>
+          <el-dropdown-item>
+            <span style="display:block;" @click="settTraPwd">{{ $t('navbar.pswSet') }}</span>
+          </el-dropdown-item>
+          <el-dropdown-item >
+            <span style="display:block;" @click="updatePassword">{{ $t('navbar.pswReset') }}</span>
+          </el-dropdown-item>
           <el-dropdown-item divided>
             <span style="display:block;" @click="logout">{{ $t('navbar.logOut') }}</span>
           </el-dropdown-item>
@@ -49,16 +53,21 @@
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
-import Breadcrumb from '@/components/Breadcrumb'
-import Hamburger from '@/components/Hamburger'
-import ErrorLog from '@/components/ErrorLog'
-import Screenfull from '@/components/Screenfull'
-import SizeSelect from '@/components/SizeSelect'
-import LangSelect from '@/components/LangSelect'
-import ThemePicker from '@/components/ThemePicker'
-
+import { mapGetters } from "vuex";
+import Breadcrumb from "@/components/Breadcrumb";
+import Hamburger from "@/components/Hamburger";
+import ErrorLog from "@/components/ErrorLog";
+import Screenfull from "@/components/Screenfull";
+import SizeSelect from "@/components/SizeSelect";
+import LangSelect from "@/components/LangSelect";
+import ThemePicker from "@/components/ThemePicker";
+var role = localStorage.getItem("role");
 export default {
+  data(){
+    return {
+      role:role
+    }
+  },
   components: {
     Breadcrumb,
     Hamburger,
@@ -69,24 +78,29 @@ export default {
     ThemePicker
   },
   computed: {
-    ...mapGetters([
-      'sidebar',
-      'name',
-      'avatar',
-      'device'
-    ])
+    ...mapGetters(["sidebar", "name", "avatar", "device"]),
+    // role(){
+    //   return localStorage.getItem('userMsg')
+    // }
   },
   methods: {
     toggleSideBar() {
-      this.$store.dispatch('toggleSideBar')
+      this.$store.dispatch("toggleSideBar");
+    },
+    settTraPwd(){
+      this.$emit("settTraPwd");
+    },
+    updatePassword(){
+      this.$emit("updatePassword");
     },
     logout() {
-      this.$store.dispatch('LogOut').then(() => {
-        location.reload()// In order to re-instantiate the vue-router object to avoid bugs
-      })
+      this.$store.dispatch("LogOut").then(() => {
+        localStorage.clear();
+        location.reload(); // In order to re-instantiate the vue-router object to avoid bugs
+      });
     }
   }
-}
+};
 </script>
 
 <style rel="stylesheet/scss" lang="scss" scoped>
@@ -100,7 +114,7 @@ export default {
     float: left;
     padding: 0 10px;
   }
-  .breadcrumb-container{
+  .breadcrumb-container {
     float: left;
   }
   .errLog-container {
@@ -110,8 +124,8 @@ export default {
   .right-menu {
     float: right;
     height: 100%;
-    &:focus{
-     outline: none;
+    &:focus {
+      outline: none;
     }
     .right-menu-item {
       display: inline-block;
@@ -120,7 +134,7 @@ export default {
     .screenfull {
       height: 20px;
     }
-    .international{
+    .international {
       vertical-align: top;
     }
     .theme-switch {

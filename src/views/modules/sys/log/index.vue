@@ -3,8 +3,8 @@
     <div class="show-box">
       <div class="query-box">
         <el-form :inline="true" :model="formInline" class="demo-form-inline">
-          <el-form-item label="用户名或用户操作">
-            <el-input v-model="formInline.user" placeholder="用户名、用户操作"></el-input>
+          <el-form-item label>
+            <el-input v-model="formInline.key" placeholder="用户名、用户操作"/>
           </el-form-item>
           <el-form-item>
             <el-button type="info" @click="query">查询</el-button>
@@ -15,32 +15,33 @@
       <div class="tb-box">
         <el-table
           :data="tableData"
+          :header-cell-style="rowClass"
           style="width: 100%"
           border
-          max-height="500"
+          max-height="750"
         >
-          <el-table-column type="index" width="35" align="center"></el-table-column>
-          <el-table-column prop="id" label="id" align="center"></el-table-column>
-          <el-table-column prop="username" label="用户名" align="center"></el-table-column>
-          <el-table-column prop="operation" label="用户操作" align="center"></el-table-column>
-          <el-table-column prop="method" label="请求方法" align="center"></el-table-column>
-          <el-table-column prop="params" label="请求参数" align="center"></el-table-column>
-          <el-table-column prop="time" label="执行时长(毫秒)" align="center"></el-table-column>
-          <el-table-column prop="ip" label="IP地址" align="center"></el-table-column>
-          <el-table-column prop="createDate" label="创建时间" align="center"></el-table-column>
+          <el-table-column type="index" width="40" align="center"/>
+          <el-table-column prop="id" label="id" align="left" width="100"/>
+          <el-table-column prop="username" label="用户名" align="left" width="120"/>
+          <el-table-column prop="operation" label="用户操作" align="left" width="150"/>
+          <el-table-column prop="method" label="请求方法" align="left" :show-overflow-tooltip="true"/>
+          <el-table-column prop="params" label="请求参数" align="left" :show-overflow-tooltip="true"/>
+          <el-table-column prop="time" label="执行时长(毫秒)" align="left" width="150"/>
+          <el-table-column prop="ip" label="IP地址" align="left"/>
+          <el-table-column prop="createDate" label="创建时间" align="center"/>
         </el-table>
       </div>
       <div class="block">
         <el-pagination
+          :current-page="page.currentPage"
+          :page-sizes="[10, 30, 50]"
+          :page-size="page.pageSize"
+          :total="page.total"
+          layout="total, sizes, prev, pager, next, jumper"
+          background
           @size-change="handleSizeChange"
           @current-change="handleCurrentChange"
-          :current-page="currentPage"
-          :page-sizes="[10, 30, 50]"
-          :page-size="50"
-          layout="total, sizes, prev, pager, next, jumper"
-          :total="400"
-          background
-        ></el-pagination>
+        />
       </div>
     </div>
   </div>
@@ -50,32 +51,61 @@ export default {
   data() {
     return {
       formInline: {
-        user: "",
-        region: ""
+        key: ""
       },
       tableData: [],
-      currentPage: 1
+      page: {
+        pageSize: 50,
+        total: 0,
+        currentPage: 1
+      }
     };
   },
+  created() {
+    this.getLogList();
+  },
   methods: {
-    query() {
-      let queryData = { user: this.formInline.user };
-      this._fetch("/query", {
-        method: "POST",
-        body: queryData
-      });
+    async query() {
+      let r = await this._fetch(
+        "/sys/log/list?limit=50&page=1&key=" + this.formInline.key,
+        { method: "GET" }
+      );
+      this.tableData = r.page.list;
     },
     clearHandle() {
-      this.formInline.user = "";
+      this.formInline.key = "";
     },
-    getAdminList() {
-      //   this._fetch("/admin", { method: "GET" });
+    async getLogList() {
+      let r = await this._fetch("/sys/log/list?limit=50&page=1", {
+        method: "GET"
+      });
+      if (r.code === 0) {
+        this.tableData = r.page.list;
+        this.page.total = r.page.totalCount;
+        this.page.pageSize = r.page.pageSize;
+      } else {
+        this.$message(r.msg);
+      }
     },
-    handleSizeChange() {},
-    handleCurrentChange() {}
-  },
-  created() {
-    this.getAdminList();
+    async handleSizeChange(val) {
+      let r = await this._fetch(
+        "/sys/log/list?limit=" + val + "&page=" + this.page.currentPage,
+        { method: "GET" }
+      );
+      this.tableData = r.page.list;
+      this.page.pageSize = val;
+    },
+    async handleCurrentChange(val) {
+      let r = await this._fetch(
+        "/sys/log/list?limit=" + this.page.pageSize + "&page=" + val,
+        { method: "GET" }
+      );
+      this.tableData = r.page.list;
+      this.page.currentPage = val;
+    },
+    rowClass() {
+      return "text-align:center";
+    }
   }
 };
 </script>
@@ -100,7 +130,7 @@ export default {
   color: #bbb;
 }
 .el-form-item {
-  margin-bottom:0;
+  margin-bottom: 0;
 }
 </style>
 

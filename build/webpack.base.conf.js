@@ -2,8 +2,11 @@
 const path = require('path')
 const utils = require('./utils')
 const config = require('../config')
-const { VueLoaderPlugin } = require('vue-loader')
+const {
+  VueLoaderPlugin
+} = require('vue-loader')
 const vueLoaderConfig = require('./vue-loader.conf')
+const FileManagerPlugin = require('filemanager-webpack-plugin')
 
 function resolve(dir) {
   return path.join(__dirname, '..', dir)
@@ -28,10 +31,9 @@ module.exports = {
   output: {
     path: config.build.assetsRoot,
     filename: '[name].js',
-    publicPath:
-      process.env.NODE_ENV === 'production'
-        ? config.build.assetsPublicPath
-        : config.dev.assetsPublicPath
+    publicPath: process.env.NODE_ENV === 'production' ?
+      config.build.assetsPublicPath :
+      config.dev.assetsPublicPath
   },
   resolve: {
     extensions: ['.js', '.vue', '.json'],
@@ -91,7 +93,20 @@ module.exports = {
       }
     ]
   },
-  plugins: [new VueLoaderPlugin()],
+  plugins: [
+    new VueLoaderPlugin(),
+    new FileManagerPlugin({ //打包zip包
+      onEnd: {
+        delete: [
+          './dist/dist.zip',
+        ],
+        archive: [{
+          source: './dist',//压缩文件，外层再包层dist，上线部署需要dist文件夹
+          destination: './dist/dist.zip'
+        } ]
+      }
+    })
+  ],
   node: {
     // prevent webpack from injecting useless setImmediate polyfill because Vue
     // source contains it (although only uses it if it's native).
